@@ -21,8 +21,8 @@ def draw_circle(event, x, y, flags, param):
     global ix, iy
     global preview
     if event == cv2.EVENT_LBUTTONDOWN:
-        cv2.circle(img, (x, y), 4, (255, 0, 0), -1)
         preview = img.copy()
+        cv2.circle(preview, (x, y), 4, (255, 0, 0), -1)
         ix, iy = x, y
     
     elif event == cv2.EVENT_MOUSEMOVE:
