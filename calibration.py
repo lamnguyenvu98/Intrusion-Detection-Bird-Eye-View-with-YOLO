@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import json
+from utils import point_to_new_perspective
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -30,7 +31,7 @@ f = open(args['points'], 'r')
 metadata = json.load(f)
 
 src = np.float32(metadata['calib_points'])
-intrusion_points = np.array(metadata['intrusion_points'])
+intrusion_points = np.float32(metadata['intrusion_points'])
 
 dst_size = (800, 1080)
 
@@ -55,8 +56,14 @@ while True:
     dst = dst_offset * np.float32(dst_size)
     
     H_matrix = cv2.getPerspectiveTransform(src, dst)
-    warped = cv2.warpPerspective(og_img, H_matrix, dst_size)
     
+    eye_view_intrusion_points = point_to_new_perspective(H_matrix, intrusion_points)
+    eye_view_intrusion_points = eye_view_intrusion_points.reshape((-1, 1, 2)).astype(np.int32)
+    # intrusion_points_view = intrusion_points.reshape((-1, 1, 2)).astype(np.int32)
+    # og_img = cv2.polylines(og_img, [eye_view_intrusion_points], True, (255, 0,0), thickness=4)
+    
+    warped = cv2.warpPerspective(og_img, H_matrix, dst_size)
+    warped = cv2.polylines(warped, [eye_view_intrusion_points], True, (255, 0,0), thickness=4)
     warped = cv2.resize(warped, (300, 600))
     
     cv2.imshow('warped', warped)

@@ -39,15 +39,15 @@ def get_red_green_boxes(intrusion_points, birds_eye_points, boxes):
 
 def get_birds_eye_view_image(green_box, red_box, intrusion_eye_view_area, eye_view_height, eye_view_width, background_image):
     # blank_image = image
-    blank_image = cv2.imread(background_image)
+    blank_image = background_image.copy()
     cv2.putText(blank_image, "Instrusion: " + str(len(red_box)), (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2, cv2.LINE_AA)
     # cv2.putText(blank_image, "No-Instrusion: " + str(len(green_box)), (400, 80), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2, cv2.LINE_AA)
     for point in green_box:
         cv2.circle(blank_image, tuple([point[6], point[7]]), 20, (0, 255, 0), -5)
     for point in red_box:
         cv2.circle(blank_image, tuple([point[6], point[7]]), 20, (0, 0, 255), -5)
-    blank_image = cv2.polylines(blank_image, [intrusion_eye_view_area], True, (255, 0, 0), 3)
-    blank_image = cv2.resize(blank_image, (eye_view_width, eye_view_height))
+    # blank_image = cv2.polylines(blank_image, [intrusion_eye_view_area], True, (255, 0, 0), 3)
+    # blank_image = cv2.resize(blank_image, (eye_view_width, eye_view_height))
     return blank_image
 
 def get_red_green_box_image(new_box_image, green_box, red_box):

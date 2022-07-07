@@ -11,6 +11,15 @@ args = vars(parser.parse_args())
 
 video = cv2.VideoCapture(args['video'])
 
+# Init video writer
+frame_width = int(video.get(3))
+frame_height = int(video.get(4))
+fps = int(video.get(cv2.CAP_PROP_FPS))
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter("results/res.mp4", fourcc, fps, (1440, 540))
+
+background_image = cv2.imread("background.png")
+
 # load json
 f = open(args['config'], 'r')
 metadata = json.load(f)
@@ -20,11 +29,11 @@ intrusion_points = np.float32(metadata['intrusion_points'])
 dst = np.float32(metadata['dst'])
 dst_size = metadata['dst_size']
 
-intrusion_points_new = intrusion_points.reshape((-1,1,2)).astype(np.int32)
-
 dst = dst * np.float32(dst_size)
 
 H_matrix = cv2.getPerspectiveTransform(src, dst)
+
+intrusion_points_new = intrusion_points.reshape((-1,1,2)).astype(np.int32)
 
 # Model Init
 class_names = []
@@ -38,18 +47,11 @@ model.setInputParams(size=(416, 416), scale=1 / 255)
 confidence_threshold = 0.5
 nms_threshold = 0.5
 
-# Init video writer
-frame_width = int(video.get(3))
-frame_height = int(video.get(4))
-fps = int(video.get(cv2.CAP_PROP_FPS))
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-out = cv2.VideoWriter("results/res.mp4", fourcc, fps, (1440, 540))
-
 while True:
     ret, frame = video.read()
     if not ret:
         break
-    image_height, image_width = frame.shape[:2]
+    # image_height, image_width = frame.shape[:2]
     warped = cv2.warpPerspective(frame, H_matrix, dst_size)
     classes, _ , boxes = model.detect(frame, confidence_threshold, nms_threshold)
     list_boxes = []
@@ -59,27 +61,35 @@ while True:
         x, y, w, h = box
         center_x, center_y = int(x+w/2), int(y+h/2)
         list_boxes.append([x, y, w, h, center_x, center_y])
-        
-    birds_eye_points = compute_point_perspective_transformation(H_matrix, list_boxes)
     
+    
+    frame = cv2.polylines(frame, [intrusion_points_new], True, (255, 0, 0), thickness=2)
     instrusion_eye_points = point_to_new_perspective(H_matrix, intrusion_points.tolist())
     
-    red_boxes, green_boxes = get_red_green_boxes(instrusion_eye_points, birds_eye_points, list_boxes)
+    if len(list_boxes) > 0:
     
-    instrusion_eye_points = instrusion_eye_points.reshape((-1, 1, 2)).astype(np.int32)
+        birds_eye_points = compute_point_perspective_transformation(H_matrix, list_boxes)
     
-    birds_eye_view_image = get_birds_eye_view_image(green_boxes, red_boxes, 
+        red_boxes, green_boxes = get_red_green_boxes(instrusion_eye_points, birds_eye_points, list_boxes)
+    
+        instrusion_eye_points = instrusion_eye_points.reshape((-1, 1, 2)).astype(np.int32)
+    
+        birds_eye_view_image = get_birds_eye_view_image(green_boxes, red_boxes, 
                                                     intrusion_eye_view_area=instrusion_eye_points,
-                                                    eye_view_height=image_height,eye_view_width=image_width//2, background_image="background.png")
+                                                    eye_view_height=frame_height, 
+                                                    eye_view_width=frame_width//2, 
+                                                    background_image=background_image)
     
-    # instrusion_eye_points = instrusion_eye_points.reshape((-1, 1, 2)).astype(np.int32)
-    # cv2.polylines(birds_eye_view_image, [instrusion_eye_points], True, (0, 255, 0), thickness=4)
+        box_red_green_image = get_red_green_box_image(frame.copy(), green_boxes, red_boxes)
+        
+    else:
+        birds_eye_view_image = background_image
+        box_red_green_image = frame
     
-    cv2.polylines(frame, [intrusion_points_new], True, (255, 0, 0), thickness=2)
-    
-    box_red_green_image = get_red_green_box_image(frame.copy(), green_boxes, red_boxes)
-    
+    birds_eye_view_image = cv2.polylines(birds_eye_view_image, [instrusion_eye_points], True, (255, 0, 0), 3)
+    birds_eye_view_image = cv2.resize(birds_eye_view_image, (frame_width//2, frame_height))
     combined_image = np.concatenate((birds_eye_view_image, box_red_green_image), axis=1)
+    
     resize_combined_image = cv2.resize(combined_image, (1440, 540))
     out.write(resize_combined_image)
     cv2.imshow("Social Distance", resize_combined_image)
