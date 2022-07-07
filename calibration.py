@@ -59,8 +59,6 @@ while True:
     
     eye_view_intrusion_points = point_to_new_perspective(H_matrix, intrusion_points)
     eye_view_intrusion_points = eye_view_intrusion_points.reshape((-1, 1, 2)).astype(np.int32)
-    # intrusion_points_view = intrusion_points.reshape((-1, 1, 2)).astype(np.int32)
-    # og_img = cv2.polylines(og_img, [eye_view_intrusion_points], True, (255, 0,0), thickness=4)
     
     warped = cv2.warpPerspective(og_img, H_matrix, dst_size)
     warped = cv2.polylines(warped, [eye_view_intrusion_points], True, (255, 0,0), thickness=4)

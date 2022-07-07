@@ -10,35 +10,50 @@ parser.add_argument("--points", "--p", type=str, default='configs/points.json', 
 args = vars(parser.parse_args())
 
 ix, iy = 0, 0
+preview = None
 
+def draw_polygon(img, points):
+    arr_points = np.int32(points).reshape((-1, 1, 2))
+    img = cv2.polylines(img, [arr_points], True, (255,0, 0), thickness=2)
+    return img
 
 def draw_circle(event, x, y, flags, param):
     global ix, iy
+    global preview
     if event == cv2.EVENT_LBUTTONDOWN:
         cv2.circle(img, (x, y), 4, (255, 0, 0), -1)
+        preview = img.copy()
         ix, iy = x, y
-
+    
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if preview is not None:
+            preview = img.copy()
+            if len(param) > 0:
+                curr_x, curr_y = param[-1]
+                cv2.line(preview, (curr_x, curr_y), (x, y), (0, 0, 255), 2)
 
 def get_points(image, numOfPoints=None, image_size=(800, 600)):
     global img
+    colors = (255, 0, 0) if numOfPoints is None else (0, 255, 0)
+    points = []
     img = image.copy()
     saved = True
     # img = cv2.resize(img, image_size)
     width, height = image.shape[:2]
     cv2.namedWindow("image")
-    cv2.setMouseCallback("image", draw_circle)
-    points = []
-    queue_images = []
-    while True:
-        img = cv2.polylines(img, [np.int32(points)], False, (255,0, 0), thickness=2)
-        cv2.imshow("image", img)
+    cv2.setMouseCallback("image", draw_circle, points)
+    while True:            
+        img = cv2.polylines(img, [np.int32(points)], False, colors, thickness=2)
+        if preview is None:
+            cv2.imshow("image", img)
+        else:
+            cv2.imshow("image", preview)
         k = cv2.waitKey(1)
         
         # Append point to list
         if k == ord('a'):
             points.append([int(ix), int(iy)])
             img = cv2.circle(img, (ix, iy), 3, (0, 0, 255), -1)
-            queue_images.append(img)
                 
         # Quit and don't save result
         if k == ord('q'):
@@ -81,9 +96,10 @@ def save_json(filename, save_file, is_video=True):
         img = cv2.imread(filename)
               
     metadata = {}
-    metadata['calib_points'], saved = get_points(img, numOfPoints=4)
+    metadata['intrusion_points'], saved = get_points(img, numOfPoints=None)
+    img = draw_polygon(img.copy(), metadata['intrusion_points'])
     if saved:
-        metadata['intrusion_points'], saved = get_points(img, numOfPoints=None)
+        metadata['calib_points'], saved = get_points(img, numOfPoints=4)
         if saved:
             out_file = open(save_file, "w")
             json.dump(metadata, out_file, indent = 4)

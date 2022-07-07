@@ -7,6 +7,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--video", "--v", type=str, default='videos/virat.mp4', help="Video Input")
 parser.add_argument("--config", "--c", type=str, default='configs/data.json', help="Json file that contains calibration data")
+parser.add_argument("--img-background", "--ib", type=str, default="background.png", help="Image background for bird eye view image")
+parser.add_argument("--input-size", "--is", type=int, default=416, help="Input size of detection model")
 args = vars(parser.parse_args())
 
 video = cv2.VideoCapture(args['video'])
@@ -18,7 +20,7 @@ fps = int(video.get(cv2.CAP_PROP_FPS))
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 out = cv2.VideoWriter("results/res.mp4", fourcc, fps, (1440, 540))
 
-background_image = cv2.imread("background.png")
+background_image = cv2.imread(args['img_background'])
 
 # load json
 f = open(args['config'], 'r')
@@ -42,7 +44,7 @@ with open("models/coco.names", "r") as f:
 
 net = cv2.dnn.readNet("models/yolov3.weights", "models/yolov3.cfg")
 model = cv2.dnn_DetectionModel(net)
-model.setInputParams(size=(416, 416), scale=1 / 255)
+model.setInputParams(size=(args['input_size'], args['input_size']), scale=1 / 255)
 
 confidence_threshold = 0.5
 nms_threshold = 0.5
