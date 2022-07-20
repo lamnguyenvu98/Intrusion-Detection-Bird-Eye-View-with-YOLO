@@ -31,6 +31,14 @@ def draw_circle(event, x, y, flags, param):
             if len(param) > 0:
                 curr_x, curr_y = param[-1]
                 cv2.line(preview, (curr_x, curr_y), (x, y), (0, 0, 255), 2)
+                if len(param) > 1:
+                    overlay = preview.copy()
+                    og = preview.copy()
+                    x1, y1 = param[0]
+                    alpha = 0.3
+                    cv2.line(og, (x1, y1), (x, y), (12, 100, 255), 2)
+                    cv2.line(overlay, (x1, y1), (x, y), (12, 100, 255), 2)
+                    preview = cv2.addWeighted(overlay, alpha, preview, 1 - alpha, 0)
 
 def get_points(image, numOfPoints=None, image_size=(800, 600)):
     global img
