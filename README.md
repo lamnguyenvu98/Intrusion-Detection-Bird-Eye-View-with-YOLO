@@ -17,30 +17,24 @@ pip install -r requirements.txt
 python set_points.py --video videos/virat.mp4 --points configs/points.json
 ```
 
-- Use left click to mark points on the image and press "a" to append selected point to a list.
-- After setting 4 points for calibration, appilication automatically switch to next part where you have to provide region of instrusion area. When you've finished selecting points for intrusion area, press "c" to complete
-- All points, that were set, are stored in a json file ("points.json" by default) 
-- Press 'q' to quit and no result is saved
+- Use left-click to select 4 calibration points on the a sample image and press "a" to append selected point to a list.
+- All points are stored in a json file ("points.json" by default) 
+- If you want to escape the process and don't want to save current seleted points, press "q".
+- After setting 4 points for calibration, appilication automatically switch to next part where you have to provide region of instrusion area. When you've finished selecting points for intrusion area, press "c" to complete the process and save calibration result.
 
 ### 2. Calibration bird's eye view transformation
 ```
 python calibration.py --video videos/virat.mp4 --points configs/points.json --config configs/data.json
 ```
-- Use trackbar window to calibrate bird's eye view
+- Use trackbars to calibrate bird's eye view.
 - Values, that are selected by trackbar, are off-set value for destination image (image are transformed to bird's eye view)
 - After finishing calibration, press "s" to save value to "data.json" file
-- Press 'q' to quit and no result is saved
+- If you want to escape the process and don't want to save current seleted points, press "q".
 
 ### 3. Run program
 ```
  python intrusion.py --video videos/virat.mp4 --config configs/data.json
 ```
-
-This project was inspired by MiAI
-
-*InstrusionWarning.pdf* was taken from MiAI's repo: https://github.com/thangnch/MiAI_Intrusion_Warning<br>
-
-Facebook: http://facebook.com/pep.oversesa<br>
 
 
 
